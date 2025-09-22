@@ -1,0 +1,7 @@
+discord.py
+python-dotenv
+pandas
+pydrive2
+tabulate
+google-auth-httplib2
+google-api-python-client
