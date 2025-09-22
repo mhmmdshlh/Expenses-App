@@ -10,7 +10,6 @@ Aplikasi manajemen pengeluaran yang dapat digunakan melalui Command Line Interfa
 - **Google Drive Sync**: Backup dan sinkronisasi data ke Google Drive
 - **Kategorisasi**: Organisasi pengeluaran berdasarkan kategori
 - **Laporan & Analisis**: View dan summary pengeluaran dengan berbagai filter
-- **Export Data**: Export data ke format Excel/CSV
 
 ## 🚀 Instalasi
 
@@ -44,7 +43,7 @@ source dc_env/bin/activate
 pip install -r requirements.txt
 ```
 
-5. Setup environment variables (opsional untuk Discord Bot):
+5. Setup environment variables (untuk Discord Bot):
 Copy dan rename `.env.example` menjadi `.env`, lalu isi nilai yang sesuai:
 ```bash
 cp .env.example .env
@@ -57,8 +56,68 @@ EXPENSES_CHANNEL_ID=your_channel_id_for_expenses_app_here
 ```
 
 6. Setup Google Drive (opsional):
-   - Letakkan file `client_secrets.json` di folder `gdrive/`
-   - Jalankan aplikasi untuk melakukan autentikasi Google Drive pertama kali
+   - Lihat bagian [🔧 Konfigurasi → Google Drive Setup](#google-drive-setup) untuk setup lengkap
+   - Dibutuhkan untuk fitur sinkronisasi data ke cloud
+
+## 🔧 Konfigurasi
+
+### Discord Bot Setup
+1. Pergi ke [Discord Developer Portal](https://discord.com/developers/applications)
+2. Buat aplikasi baru
+3. Buat bot dan copy token
+4. Tambahkan token ke file `.env`
+5. Invite bot ke server dengan permissions yang sesuai
+
+### Google Drive Setup
+Untuk menggunakan fitur sinkronisasi dengan Google Drive, ikuti langkah berikut:
+
+#### 1. Setup Google Cloud Console
+1. Pergi ke [Google Cloud Console](https://console.cloud.google.com/)
+2. Buat project baru atau pilih project yang ada
+3. Enable **Google Drive API**:
+   - Pergi ke "APIs & Services" → "Library"
+   - Cari "Google Drive API" dan klik "Enable"
+4. Buat credentials (OAuth 2.0 Client ID):
+   - Pergi ke "APIs & Services" → "Credentials"
+   - Klik "Create Credentials" → "OAuth 2.0 Client ID"
+   - Pilih "Desktop application"
+   - Beri nama (contoh: "Expenses App")
+   - Download file JSON credentials
+
+#### 2. Setup File Konfigurasi
+1. **client_secrets.json**: 
+   - Rename file JSON yang didownload menjadi `client_secrets.json`
+   - Letakkan di folder `gdrive/`
+
+2. **settings.yaml**:
+   Buat file `gdrive/settings.yaml` dengan konfigurasi berikut:
+   ```yaml
+   client_config_backend: settings
+   client_config:
+     client_id: your_client_id_from_json_file
+     client_secret: your_client_secret_from_json_file
+
+   save_credentials: True
+   save_credentials_backend: file
+   save_credentials_file: gdrive/credentials.json
+
+   get_refresh_token: True
+
+   oauth_scope:
+     - https://www.googleapis.com/auth/drive
+   ```
+
+   **Tips**: Salin `client_id` dan `client_secret` dari file `client_secrets.json` yang sudah didownload.
+
+#### 3. Autentikasi Pertama Kali
+1. Ketika pertama kali menyimpan data ke Google Drive menggunakan perintah:
+   ```bash
+   python cli.py drive save
+   ```
+2. Browser akan terbuka otomatis untuk proses OAuth
+3. Login dengan akun Google Anda
+4. Berikan permission untuk mengakses Google Drive
+5. File `credentials.json` akan dibuat otomatis untuk autentikasi selanjutnya
 
 ## 📖 Penggunaan
 
@@ -66,12 +125,12 @@ EXPENSES_CHANNEL_ID=your_channel_id_for_expenses_app_here
 
 #### Menambah Pengeluaran
 ```bash
-python cli.py add 2025-01-15 "Makan siang" 25000 "Food"
+python cli.py add 2025-01-15 "Mie Ayam" 12000 "Makanan"
 ```
 
 #### Menambah Multiple Pengeluaran
 ```bash
-python cli.py addmany -e 2025-01-15 "Kopi" 15000 "Drinks" -e 2025-01-15 "Bensin" 50000 "Transport"
+python cli.py addmany -e 2025-01-15 "Kopi" 5000 "Minuman" -e 2025-01-15 "Bensin" 20000 "Transportasi"
 ```
 
 #### Melihat Pengeluaran
@@ -86,7 +145,7 @@ python cli.py view -y 2025
 python cli.py view -m 01
 
 # Filter berdasarkan kategori
-python cli.py view --category_name Food
+python cli.py view --category_name Makanan
 
 # Limit dan offset
 python cli.py view --limit 10 --offset 0
@@ -107,14 +166,13 @@ python cli.py summary --period this_month
 python cli.py summary --group-by year --period this_year
 ```
 
-#### Export Data
-```bash
-python cli.py export --format excel --output expenses_2025.xlsx
-```
-
 #### Sync dengan Google Drive
 ```bash
-python cli.py sync
+# Simpan data ke Google Drive
+python cli.py drive save
+
+# Load data dari Google Drive
+python cli.py drive load
 ```
 
 ### Discord Bot
@@ -133,10 +191,9 @@ Gunakan prefix `!` (bisa diubah di kode bot) untuk commands umum bot:
 ```
 Gunakan prefix `>` (bisa diubah di kode bot) untuk menjalankan commands expenses:
 ```
->add 2025-01-15 "Makan siang" 25000 "Food"
+>add 2025-01-15 "Mie Ayam" 12000 "Makanan"
 >view
->summary
->export
+>addmany 2025-09-17 "Bakso" 15000 "Makanan", 2025-09-17 "Bensin" 20000 "Transportasi"
 ```
 
 Bot Discord menyediakan interface yang lebih user-friendly dengan:
@@ -165,10 +222,10 @@ python cli.py %*
 Kemudian gunakan:
 ```bash
 # Dengan ekstensi
-expenses.bat add 2025-01-15 "Kopi" 15000 "Drinks"
+expenses.bat add 2025-01-15 "Kopi" 5000 "Minuman"
 
 # Atau tanpa ekstensi (jika di PATH atau direktori yang sama)
-expenses add 2025-01-15 "Kopi" 15000 "Drinks"
+expenses add 2025-01-15 "Kopi" 5000 "Minuman"
 ```
 
 #### Menambahkan ke PATH (untuk akses global)
@@ -236,22 +293,6 @@ Expenses_App/
 - **google-auth-httplib2**: Google authentication
 - **google-api-python-client**: Google API client
 
-## 🔧 Konfigurasi
-
-### Google Drive Setup
-1. Pergi ke [Google Cloud Console](https://console.cloud.google.com/)
-2. Buat project baru atau pilih project yang ada
-3. Enable Google Drive API
-4. Buat credentials (OAuth 2.0 Client ID)
-5. Download file JSON dan simpan sebagai `gdrive/client_secrets.json`
-
-### Discord Bot Setup
-1. Pergi ke [Discord Developer Portal](https://discord.com/developers/applications)
-2. Buat aplikasi baru
-3. Buat bot dan copy token
-4. Tambahkan token ke file `.env`
-5. Invite bot ke server dengan permissions yang sesuai
-
 ## 🤝 Contributing
 
 1. Fork repository
@@ -266,7 +307,6 @@ Expenses_App/
 - CLI interface untuk manajemen pengeluaran
 - Discord bot dengan UI interaktif
 - Google Drive synchronization
-- Export data ke Excel/CSV
 - Database SQLite dengan kategorisasi
 - Batch script untuk Windows
 

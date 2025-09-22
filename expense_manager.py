@@ -190,8 +190,6 @@ class ExpenseManager:
 
         stat += ';'
 
-        print(stat)
-
         df = pd.read_sql_query(stat, self.conn, params=params)
         return df
     

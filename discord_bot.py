@@ -14,8 +14,6 @@ async def main():
     bot = commands.Bot(command_prefix=['!', '>'], intents=intents, owner_id=int(os.getenv('OWNER_ID')))
 
     await bot.load_extension("cogs.general")
-
-    # TODO: kirim pesan ketika prefix '>' digunakan pada channel yg tidak sesuai
     await bot.load_extension("cogs.expenses")
     
     @bot.event
